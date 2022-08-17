@@ -1,70 +1,204 @@
-# Getting Started with Create React App
+#  Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Introduction
 
-## Available Scripts
+### node.js 설치
 
-In the project directory, you can run:
+```bash
+# node.js 설치 후
+node -v
+# npx 설치 후
+npx
+```
+### 프로젝트 생성
 
-### `npm start`
+```bash
+npx create-react-app my-app
+cd my-app
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+package.json에 실행 가능한 script 정보 있음
+`npm start` 혹은  `npm run start`로 실행
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- src : 모든 파일 넣을 곳
 
-### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+## 구조
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+src
+├ App.js
+├ Index.js
+├ components
+│  └ Movie.js
+└ routes
+  └ Detail.js
+  └ Home.js
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+## 코드
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Index.js
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```react
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### App.js
 
-### Code Splitting
+```react
+import {
+  BrowserRouter as Router, Switch, Route,
+} from "react-router-dom";
+import Detail from "./routes/Detail";
+import Home from "./routes/Home"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
 
-### Analyzing the Bundle Size
+function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/movie/:id">
+          <Detail />
+        </Route>
+        <Route path="/">
+          <Home />
+        </Route>
+      </Switch>
+    </Router>
+  )
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+export default App
+```
 
-### Making a Progressive Web App
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-### Advanced Configuration
+### Home.js
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```react
+import { useEffect, useState } from "react";
+import Movie from "../components/Movie";
 
-### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+function Home() {
+  const [loading, setLoading] = useState(true);
+  const [movies, setMovies] = useState([]);
+  const getMovies = async() => {
+    const json = await (
+      await fetch(
+      `https://yts.mx/api/v2/list_movies.json?minimum_rating=8.8&sort_by=year`
+      )
+    ).json()
+    setMovies(json.data.movies)
+    setLoading(false)
+  }
+  useEffect(() => {
+    getMovies()
+  }, [])
+  return (
+    <div>
+      {loading ? (
+        <h1>Loading...</h1>
+      ) : (
+        <div>
+          {movies.map((movie) => (
+            <Movie
+              key={movie.id}
+              id={movie.id}
+              coverImg={movie.medium_cover_image}
+              title={movie.title}
+              summary={movie.summary}
+              genres={movie.genres}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-### `npm run build` fails to minify
+export default Home;
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+### Detail.js
+
+```react
+import { useEffect } from "react"
+import { useParams } from "react-router-dom"
+
+function Detail() {
+  const { id } = useParams()
+  const getMovie = async () => {
+    const json = await (
+      await fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`)
+    ).json()
+  }
+  useEffect(() => {
+    getMovie()
+  }, [])
+  return (
+    <h1>Detail</h1>
+  )
+}
+
+export default Detail
+```
+
+
+
+### Movie.js
+
+```react
+import PropTypes from "prop-types";
+import {Link} from "react-router-dom";
+
+
+function Movie({id, coverImg, title, summary, genres}) {
+  return (
+    <div>
+      <img src={coverImg} alt={title}/>
+      <h2>
+        <Link to={`/movie/${id}`}>
+          {title}
+        </Link>
+      </h2>
+      <p>{summary.length > 235 ? `${summary.slice(0, 235)}...`: summary}</p>
+      <ul>
+        {genres.map((g) => (
+          <li key={g}>{g}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+Movie.propTypes = {
+  id: PropTypes.number.isRequired,
+  coverImg: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  summary: PropTypes.string.isRequired,
+  genres: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
+export default Movie
+```
+
